@@ -72,8 +72,8 @@ cp ${MANDREL_REPO}/sdk/mxbuild/linux-amd64/native-image.image-bash/native-image 
 ln -s ../lib/svm/bin/native-image ${MANDREL_HOME}/bin/native-image
 
 ### Fix native-image launcher
-sed -i -e 's!EnableJVMCI!EnableJVMCI -Dorg.graalvm.version="'${MANDREL_VERSION}' (Mandrel Distribution)" --upgrade-module-path ${location}/../../jvmci/graal.jar --add-modules "org.graalvm.truffle,org.graalvm.sdk" --module-path ${location}/../../truffle/truffle-api.jar:${location}/../../jvmci/graal-sdk.jar!' \
-    ${MANDREL_HOME}/lib/svm/bin/native-image
+sed -i -e "s!EnableJVMCI!EnableJVMCI -Dorg.graalvm.version=\"'${MANDREL_VERSION}' (Mandrel Distribution)\" --upgrade-module-path \${location}/../../jvmci/graal.jar --add-modules \"org.graalvm.truffle,org.graalvm.sdk\" --module-path \${location}/../../truffle/truffle-api.jar:\${location}/../../jvmci/graal-sdk.jar!" \
+    "${MANDREL_HOME}/lib/svm/bin/native-image"
 
 ### Create tarball
 tar -czf mandrel.tar.gz -C ${MANDREL_HOME}/.. mandrelJDK
