@@ -1,13 +1,11 @@
-matrixJob('mandrel-windows-integration-tests') {
+matrixJob('mandrel-windows-integration-release-tests') {
     axes {
         text('JDK_VERSION',
                 'jdk11',
                 'jdk17'
         )
         text('MANDREL_VERSION',
-                'graal-vm-21.3',
-                '21.3',
-                'master'
+                '21.3'
         )
         text('QUARKUS_VERSION',
                 '2.2.3.Final',
@@ -16,8 +14,8 @@ matrixJob('mandrel-windows-integration-tests') {
         )
         labelExpression('LABEL', ['w2k19'])
     }
-    description('Run Mandrel integration tests')
-    displayName('Windows :: Integration tests')
+    description('Run Mandrel integration release tests')
+    displayName('Windows :: Integration RELEASE tests')
     logRotator {
         numToKeep(30)
     }
@@ -39,6 +37,7 @@ matrixJob('mandrel-windows-integration-tests') {
                 'Choose "heads" if you want to build from a branch, or "tags" if you want to build from a tag.'
         )
         stringParam('MANDREL_INTEGRATION_TESTS_REF', 'master', 'Branch or tag.')
+        stringParam('MANDREL_21_3_BUILD_NUM', '3', 'Build number of the Final build: https://ci.modcluster.io/job/mandrel-21.3-windows-build-matrix/')
     }
     scm {
         git {
@@ -56,9 +55,16 @@ matrixJob('mandrel-windows-integration-tests') {
 call vcvars64
 IF NOT %ERRORLEVEL% == 0 ( exit 1 )
 
+IF "%MANDREL_VERSION%"=="21.3" (
+    set MANDREL_BUILD_NUM=%MANDREL_21_3_BUILD_NUM%
+) ELSE (
+  echo "UNKNOWN Mandrel version: %MANDREL_VERSION% Quitting..."
+  exit 1
+)
+
 set downloadCommand= ^
 $c = New-Object System.Net.WebClient; ^
-$url = 'https://ci.modcluster.io/view/Mandrel/job/mandrel-%MANDREL_VERSION%-windows-build-matrix/JDK_VERSION=%JDK_VERSION%,LABEL=%LABEL%/lastSuccessfulBuild/artifact/*zip*/archive.zip'; $file = 'archive.zip'; ^
+$url = 'https://ci.modcluster.io/view/Mandrel/job/mandrel-%MANDREL_VERSION%-windows-build-matrix/JDK_VERSION=%JDK_VERSION%,LABEL=%LABEL%/%MANDREL_BUILD_NUM%/artifact/*zip*/archive.zip'; $file = 'archive.zip'; ^
 $c.DownloadFile($url, $file);
 powershell -Command "%downloadCommand%"
 
@@ -104,7 +110,6 @@ mvn clean verify -Ptestsuite -Dquarkus.version=%QUARKUS_VERSION%
             healthScaleFactor(1.0)
         }
         archiveArtifacts('**/target/*-reports/*.xml,**/target/archived-logs/**')
-
         extendedEmail {
             recipientList('karm@redhat.com')
             triggers {
@@ -121,15 +126,6 @@ mvn clean verify -Ptestsuite -Dquarkus.version=%QUARKUS_VERSION%
             cleaner {
                 psCleaner {
                     killerType('org.jenkinsci.plugins.proccleaner.PsRecursiveKiller')
-                }
-            }
-        }
-        downstreamParameterized {
-            trigger(['mandrel-windows-quarkus-tests']) {
-                condition('ALWAYS')
-                parameters {
-                    currentBuild()
-                    matrixSubset('(MANDREL_VERSION=="${MANDREL_VERSION}" && JDK_VERSION=="${JDK_VERSION}" && LABEL=="${LABEL}")')
                 }
             }
         }

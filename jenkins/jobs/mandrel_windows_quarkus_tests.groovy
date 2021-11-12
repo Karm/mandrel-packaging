@@ -26,10 +26,9 @@ matrixJob('mandrel-windows-quarkus-tests') {
             absolute(720)
         }
     }
-//    combinationFilter(
-//            ' (MANDREL_VERSION.contains("20") && QUARKUS_VERSION.startsWith("1.")) ||' +
-//            ' (MANDREL_VERSION.contains("20") && QUARKUS_VERSION.startsWith("2.")) ||' +
-//            ' ((MANDREL_VERSION.contains("21") || MANDREL_VERSION.contains("master")) && (QUARKUS_VERSION=="main" || QUARKUS_VERSION.startsWith("2.")))')
+    combinationFilter(
+            '!(JDK_VERSION.contains("17") && QUARKUS_VERSION.contains("2.2"))'
+    )
     parameters {
         stringParam('QUARKUS_REPO', 'https://github.com/quarkusio/quarkus.git', 'Quarkus repository.')
     }
@@ -42,7 +41,7 @@ IF NOT %ERRORLEVEL% == 0 ( exit 1 )
 set BUILD_JOB="mandrel-%MANDREL_VERSION%-windows-build"
 set downloadCommand= ^
 $c = New-Object System.Net.WebClient; ^
-$url = 'https://ci.modcluster.io/view/Mandrel/job/mandrel-%MANDREL_VERSION%-windows-build-matrix/JDK_VERSION=%JDK_VERSION%,LABEL=%label%/lastSuccessfulBuild/artifact/*zip*/archive.zip'; $file = 'archive.zip'; ^
+$url = 'https://ci.modcluster.io/view/Mandrel/job/mandrel-%MANDREL_VERSION%-windows-build-matrix/JDK_VERSION=%JDK_VERSION%,LABEL=%LABEL%/lastSuccessfulBuild/artifact/*zip*/archive.zip'; $file = 'archive.zip'; ^
 $c.DownloadFile($url, $file);
 powershell -Command "%downloadCommand%"
 
@@ -97,7 +96,6 @@ mvnw install -Dquickly & mvnw verify -f integration-tests/pom.xml --fail-at-end 
             healthScaleFactor(1.0)
         }
         archiveArtifacts('**/target/*-reports/*.xml')
-
         extendedEmail {
             recipientList('karm@redhat.com')
             triggers {
