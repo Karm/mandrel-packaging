@@ -533,7 +533,7 @@ class SequentialBuild
         {
             // Create wrapper jar file for archiving resources (e.g. native image launcher script)
             LOG.debugf("Patch sdk suite.py ...");
-            String patchPath = fs.workingDir().resolve(Path.of("resources", "mandrel-packaging-wrapper.patch")).toString();
+            final String patchPath = fs.workingDir().resolve(Path.of("resources", "mandrel-packaging-wrapper.patch")).toString();
             exec.exec.accept(Tasks.Exec.of(List.of("git", "apply", patchPath), fs.mandrelRepo()));
             LOG.debugf("Build Mandrel's wrapper jar...");
             Mx.BuildArgs buildArgs = Mx.BuildArgs.of("--only", "MANDREL_PACKAGING_WRAPPER");
@@ -542,7 +542,7 @@ class SequentialBuild
             // These attributes are access by Red Hat Build of Quarkus to verify that the correct artifacts are being used.
             // The value of Specification-Version is not that important, but the Implementation-Version should match the version of the native-image.
             LOG.debugf("Patch jars' manifests with Specification-Version and Implementation-Version...");
-            File manifest = createTempManifest(options);
+            final File manifest = createTempManifest(options);
             mx.artifacts.forEach((artifact, paths) ->
             {
                 final String jarPath = PathFinder.getFirstExisting(fs.mandrelRepo().resolve(paths[0]).toString(), artifact).toString();
@@ -1008,7 +1008,7 @@ class Mx
     private static Tasks.Exec execTask(List<String> args, Path directory, EnvVar... envVars)
     {
         final EnvVar[] mxEnvVars = new EnvVar[envVars.length + 1];
-        mxEnvVars[0] = new EnvVar("MX_PYTHON", "python3");
+        mxEnvVars[0] = new EnvVar("MX_PYTHON", "python");
         System.arraycopy(envVars, 0, mxEnvVars, 1, envVars.length);
         return Tasks.Exec.of(args, directory, mxEnvVars);
     }
